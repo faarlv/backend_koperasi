@@ -29,13 +29,14 @@ export class UsersService {
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await this.prismaService.user.findMany();
+    const result: User[] = await this.prismaService.user.findMany();
+    return result;
   }
 
-  async updateUser(id: number, data: User): Promise<User> {
+  async updateUser(id: string, data: User): Promise<User> {
     return await this.prismaService.user.update({
       where: {
-        id: id,
+        id: Number(id),
       },
       data: {
         name: data.name,
@@ -45,10 +46,10 @@ export class UsersService {
     });
   }
 
-  async deleteUser(id: number): Promise<User> {
+  async deleteUser(id: string): Promise<User> {
     return await this.prismaService.user.delete({
       where: {
-        id: id,
+        id: Number(id),
       },
     });
   }
