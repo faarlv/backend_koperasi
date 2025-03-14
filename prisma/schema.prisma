@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,12 +8,98 @@ datasource db {
 }
 
 model User {
-  id        Int    @id @default(autoincrement())
-  name      String
-  email     String @unique
-  phone     String @unique
-  password  String
-  role      String @default("user") // "user" or "admin"
+  id          String        @id @default(uuid())
+  name        String
+  email       String        @unique
+  phone       String        @unique
+  password    String
+  createdAt   DateTime      @default(now())
+  role        Role          @default(MEMBER)
+  Loan        Loan[]
+  Transaction Transaction[]
+  UserBalance UserBalance[]
+
+  @@map("users")
+}
+
+model UserBalance {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  totalBalance Decimal  @default(0)
+  updatedAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_balance")
+
+}
+
+model Loan {
+  id              String        @id @default(uuid())
+  userId          String
+  amount          Decimal
+  duration        Int
+  purpose         String
+  status          LoanStatus    @default(PENDING)
+  paidMonths      Int           @default(0)
+  remainingMonths Int
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  installments    Installment[]
+  images          LoanImage[]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("loans")
+
+}
+
+model Installment {
+  id        String   @id @default(uuid())
+  loanId    String
+  month     Int
+  paidAt    DateTime @default(now())
   createdAt DateTime @default(now())
-  @@map("Users")
+
+  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@map("installment")
+
+}
+
+model LoanImage {
+  id     String @id @default(uuid())
+  loanId String
+  url    String
+
+  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@map("loan_image")
+
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  userId    String
+  amount    Decimal
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("transactions")
+
+}
+
+
+enum LoanStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ONGOING
+  COMPLETED
+}
+
+enum Role {
+  MEMBER
+  ADMIN
 }

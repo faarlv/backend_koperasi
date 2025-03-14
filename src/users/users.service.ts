@@ -20,10 +20,18 @@ export class UsersService {
     });
   }
 
-  async getUserById(id: number): Promise<User | null> {
+  async getUserById(id: string): Promise<User | null> {
     return await this.prismaService.user.findUnique({
       where: {
         id: id,
+      },
+    });
+  }
+
+  async getUserByName(name: string): Promise<User | null> {
+    return await this.prismaService.user.findFirst({
+      where: {
+        name: name,
       },
     });
   }
@@ -36,7 +44,7 @@ export class UsersService {
   async updateUser(id: string, data: User): Promise<User> {
     return await this.prismaService.user.update({
       where: {
-        id: Number(id),
+        id: id,
       },
       data: {
         name: data.name,
@@ -49,7 +57,7 @@ export class UsersService {
   async deleteUser(id: string): Promise<User> {
     return await this.prismaService.user.delete({
       where: {
-        id: Number(id),
+        id: id,
       },
     });
   }

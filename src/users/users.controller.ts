@@ -18,7 +18,7 @@ export class UsersController {
   }
 
   @Get('/find/')
-  async findOne(@Body('id') id: number) {
+  async findOne(@Body('id') id: string) {
     return await this.usersService.getUserById(id);
   }
 
