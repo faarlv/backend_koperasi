@@ -13,10 +13,16 @@ export class LoanService {
 
   /** 📝 User requests a loan */
   async requestLoan(userId: string, dto: RequestLoanDto) {
+    const interestFee = dto.amount * 0.1; // 10% interest
+    const totalDue = dto.amount + interestFee;
+
     return await this.prisma.loan.create({
       data: {
         userId,
         amount: dto.amount,
+        interestFee,
+        totalDue,
+        totalPaid: 0, // Initially no payments made
         duration: dto.duration,
         remainingMonths: dto.duration,
         purpose: dto.purpose,
@@ -57,6 +63,10 @@ export class LoanService {
       throw new BadRequestException('Loan already processed');
     }
 
+    if (!Object.values(LoanStatus).includes(status)) {
+      throw new BadRequestException('Invalid status update');
+    }
+
     return await this.prisma.loan.update({
       where: { id: loanId },
       data: { status },
@@ -81,10 +91,11 @@ export class LoanService {
   /** 🎉 Mark Loan as Completed */
   async completeLoan(loanId: string) {
     const loan = await this.prisma.loan.findUnique({ where: { id: loanId } });
+
     if (!loan) throw new NotFoundException('Loan not found');
 
-    if (loan.remainingMonths !== 0) {
-      throw new BadRequestException('Loan still has unpaid installments');
+    if (loan.totalPaid < loan.totalDue) {
+      throw new BadRequestException('Loan still has outstanding balance');
     }
 
     return await this.prisma.loan.update({

@@ -22,8 +22,7 @@ export class AuthService {
       console.log(input.password);
       const jwt = env.JWT_SECRET;
       console.log(jwt);
-      const isValid = await comparePassword(input.password, user.password);
-      if (!isValid) {
+      if (input.password !== user.password) {
         throw new UnauthorizedException('invalid password');
       }
       return { id: user.id, name: user.name };

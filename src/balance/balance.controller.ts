@@ -22,6 +22,16 @@ export class BalanceController {
     return await this.balanceService.getBalanceUserById(req.user.id);
   }
 
+  @Get('all')
+  async getAllBalance() {
+    return await this.balanceService.getAllBalance();
+  }
+
+  @Get('total')
+  async getTotalBalance() {
+    return await this.balanceService.getTotalBalance();
+  }
+
   @Get(':userId')
   async getUserBalance(@Param('userId') userId: string) {
     return this.balanceService.getBalanceUserById(userId);
@@ -32,12 +42,11 @@ export class BalanceController {
     return await this.balanceService.getUserTransaction(userId);
   }
 
-  // ✅ Update balance with transaction logging
   @Put(':userId')
   async updateUserBalance(
     @Param('userId') userId: string,
-    @Body() body: { amount: number },
+    @Body() body: { amount: number; type: string },
   ) {
-    return this.balanceService.updateBalance(userId, body.amount);
+    return this.balanceService.updateBalance(userId, body.amount, body.type);
   }
 }

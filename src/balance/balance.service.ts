@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -21,7 +25,18 @@ export class BalanceService {
     });
   }
 
-  async updateBalance(userId: string, amount: number) {
+  async getTotalBalance() {
+    const total = await this.prismaService.userBalance.aggregate({
+      _sum: { totalBalance: true },
+    });
+    return { totalBalance: total._sum.totalBalance || 0 }; // Return 0 if no data
+  }
+
+  async getAllBalance() {
+    return await this.prismaService.userBalance.findMany();
+  }
+
+  async updateBalance(userId: string, amount: number, type: string) {
     return this.prismaService.$transaction(async (prisma) => {
       console.log('Updating balance for userId:', userId);
 
@@ -33,11 +48,28 @@ export class BalanceService {
 
       // If the balance doesn't exist, create it
       if (!balance) {
+        if (type === 'withdraw') {
+          throw new BadRequestException(
+            'Cannot withdraw. No balance record found.',
+          );
+        }
         console.log('Balance not found, creating new balance...');
         balance = await prisma.userBalance.create({
           data: { userId, totalBalance: 0 },
         });
         console.log('Created new balance:', balance);
+      }
+
+      if (type === 'withdraw') {
+        if (balance.totalBalance.toNumber() <= 0) {
+          throw new BadRequestException('Insufficient balance for withdrawal.');
+        }
+        if (balance.totalBalance.toNumber() < amount) {
+          throw new BadRequestException(
+            'Withdrawal amount exceeds available balance.',
+          );
+        }
+        amount = -amount; // Convert amount to negative for subtraction
       }
 
       // Calculate the new balance
@@ -56,7 +88,7 @@ export class BalanceService {
 
       // Create a transaction record
       await prisma.transaction.create({
-        data: { userId, amount },
+        data: { userId, amount, type: 'deposit' }, // Add the appropriate type value
       });
       console.log('Transaction created for userId:', userId);
 

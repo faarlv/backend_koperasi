@@ -8,15 +8,20 @@ export class UsersService {
   constructor(private prismaService: PrismaService) {}
 
   async createUser(user: User): Promise<User> {
-    const hashedPassword = await hashPassword(user.password);
+    const userData: any = {
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      password: user.password,
+    };
+
+    // Conditionally add the role if it exists
+    if (user.role) {
+      userData.role = user.role;
+    }
 
     return await this.prismaService.user.create({
-      data: {
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        password: hashedPassword,
-      },
+      data: userData,
     });
   }
 

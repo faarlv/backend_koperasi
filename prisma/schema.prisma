@@ -38,6 +38,9 @@ model Loan {
   id              String        @id @default(uuid())
   userId          String
   amount          Decimal
+  interestFee     Decimal       // 10% of amount
+  totalDue        Decimal       // amount + interestFee
+  totalPaid       Decimal       @default(0)  // Tracks how much has been paid
   duration        Int
   purpose         String
   status          LoanStatus    @default(PENDING)
@@ -51,21 +54,21 @@ model Loan {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("loans")
-
 }
 
 model Installment {
-  id        String   @id @default(uuid())
-  loanId    String
-  month     Int
-  paidAt    DateTime @default(now())
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  loanId      String
+  month       Int
+  amountPaid  Decimal   // How much user paid in this installment
+  paidAt      DateTime  @default(now())
+  createdAt   DateTime  @default(now())
 
   loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
 
   @@map("installment")
-
 }
+
 
 model LoanImage {
   id     String @id @default(uuid())
@@ -82,6 +85,7 @@ model Transaction {
   id        String   @id @default(uuid())
   userId    String
   amount    Decimal
+  type      String   
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
